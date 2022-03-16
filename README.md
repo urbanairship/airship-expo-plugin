@@ -1,29 +1,63 @@
-# airship-expo-plugin
+# Airship Expo Plugin
 
-Airship Expo config plugin
+Airship [Expo Config Plugin](https://docs.expo.dev/guides/config-plugins/). This plugin modifies the managed workflow builds to enable Push Notifications on both iOS and Android.
 
-# API documentation
+## Installing
 
-- [Documentation for the master branch](https://github.com/expo/expo/blob/master/docs/pages/versions/unversioned/sdk/airship-plugin.md)
-- [Documentation for the latest stable release](https://docs.expo.io/versions/latest/sdk/airship-plugin/)
-
-# Installation in managed Expo projects
-
-For managed [managed](https://docs.expo.io/versions/latest/introduction/managed-vs-bare/) Expo projects, please follow the installation instructions in the [API documentation for the latest stable release](#api-documentation). If you follow the link and there is no documentation available then this library is not yet usable within managed projects &mdash; it is likely to be included in an upcoming Expo SDK release.
-
-# Installation in bare React Native projects
-
-For bare React Native projects, you must ensure that you have [installed and configured the `react-native-unimodules` package](https://github.com/expo/expo/tree/master/packages/react-native-unimodules) before continuing.
-
-### Add the package to your npm dependencies
-
-```
-npm install airship-expo-plugin
+```sh
+expo install airship-expo-plugin
+yarn add urbanairship-react-native
 ```
 
+### Configuring the plugin
 
+Add the plugin to the app.json:
 
+```json
+  "plugins":[
+    [
+      "airship-expo-plugin",
+      {
+        "android":{
+          "icon":"./assets/ic_notification.png"
+        },
+        "ios":{
+          "mode": "development"
+        }
+      }
+    ]
+  ]
+```
 
-# Contributing
+Android Config:
+- icon: Local path to an image to use as the icon for push notifications. 96x96 all-white png with transparency. The name of the icon will be the resource name.
 
-Contributions are very welcome! Please refer to guidelines described in the [contributing guide]( https://github.com/expo/expo#contributing).
+iOS Config:
+- mode: The APNS entitlement. Either `development` or `production`
+
+## Calling takeOff
+
+Call takeOff in the app initializes:
+
+```ts
+import { UrbanAirship } from 'urbanairship-react-native';
+
+UrbanAirship.takeOff({
+  default: {
+    appSecret: "REPLACE_WITH_YOUR_APP_KEY",
+    appKey: "REPLACE_WITH_YOUR_APP_SECRET"
+  },
+  site: "us",
+  urlAllowList: ["*"],
+  android: {
+    notificationConfig: {
+      icon: "ic_notification", // should match file name above
+      accentColor: "#00ff00"
+    }
+  }
+});
+```
+
+The Airship SDK can only be initialized once, and after being initialized the config will be applied
+on the next app start. Calling takeOff from React multiple times is allowed, but the config will not
+be applied until the next app run.

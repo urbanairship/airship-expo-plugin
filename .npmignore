@@ -1,0 +1,14 @@
+.github
+scripts/
+node_modules
+npm-debug.log
+yarn-error.log
+
+*.DS_Store
+*.orig
+*.swo
+*.swp
+*.iml
+
+#jsdoc
+docs/

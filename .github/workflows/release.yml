@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+*"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Check Version
+        run: bash ./scripts/check_version.sh ${GITHUB_REF/refs\/tags\//}
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - name: Get the release notes
+        id: get_release_notes
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          NOTES="$(awk "/## Version $VERSION/{flag=1;next}/## Version/{flag=0}flag" CHANGELOG.md)"
+          NOTES="${NOTES//'%'/'%25'}"
+          NOTES="${NOTES//$'\n'/'%0A'}"
+          NOTES="${NOTES//$'\r'/'%0D'}"
+          echo ::set-output name=NOTES::"$NOTES"
+      - name: Build
+        run: yarn instal && yarn build
+      - name: Release
+        run: yarn publish
+      - name: Github Release
+        uses: actions/create-release@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.VERSION }}
+          release_name: ${{ steps.get_version.outputs.VERSION }}
+          body: ${{ steps.get_release_notes.outputs.NOTES }}
+          draft: false
+          prerelease: false

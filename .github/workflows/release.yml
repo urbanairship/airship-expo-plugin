@@ -28,7 +28,7 @@ jobs:
           NOTES="${NOTES//$'\r'/'%0D'}"
           echo ::set-output name=NOTES::"$NOTES"
       - name: Build
-        run: yarn instal && yarn build
+        run: yarn install && yarn build
       - name: Release
         run: yarn publish
       - name: Github Release

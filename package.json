@@ -4,11 +4,11 @@
     "description": "Airship Expo config plugin",
     "main": "./app.plugin.js",
     "scripts": {
-      "build": "expo-module build plugin",
+      "build": "tsc --build plugin",
       "clean": "expo-module clean",
       "lint": "expo-module lint",
       "test": "expo-module test",
-      "prepare": "expo-module prepare",
+      "prepare": "expo-module clean && tsc --build plugin",
       "prepublishOnly": "expo-module prepublishOnly",
       "expo-module": "expo-module"
     },

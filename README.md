@@ -44,8 +44,8 @@ import { UrbanAirship } from 'urbanairship-react-native';
 
 UrbanAirship.takeOff({
   default: {
-    appSecret: "REPLACE_WITH_YOUR_APP_KEY",
-    appKey: "REPLACE_WITH_YOUR_APP_SECRET"
+    appSecret: "REPLACE_WITH_YOUR_APP_SECRET",
+    appKey: "REPLACE_WITH_YOUR_APP_KEY"
   },
   site: "us",
   urlAllowList: ["*"],

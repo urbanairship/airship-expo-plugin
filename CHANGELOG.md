@@ -1,5 +1,8 @@
 # Airship Expo Plugin Changelog
 
+## Version 1.2.0 - June 04, 2024
+Minor version that updates @expo/config-plugins dependency.
+
 ## Version 1.1.0 - October 18, 2023
 Minor version that updates @expo/config-plugins dependency.
 

@@ -7,6 +7,7 @@ import {
 import { generateImageAsync, ImageOptions } from '@expo/image-utils';
 import { writeFileSync, existsSync, mkdirSync } from 'fs';
 import { resolve, basename } from 'path';
+
 import { AirshipAndroidPluginProps } from './withAirship';
 
 const iconSizeMap: Record<string, number> = {

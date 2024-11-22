@@ -6,16 +6,16 @@ import { withAirshipIOS } from './withAirshipIOS';
 const pkg = require('airship-expo-plugin/package.json');
 
 export type AirshipAndroidPluginProps = {
-    icon: string;
+  icon: string;
 };
 
 export type AirshipIOSPluginProps = {
-    mode: 'development' | 'production';
+  mode: 'development' | 'production';
 }
 
 export type AirshipPluginProps = {
-    android?: AirshipAndroidPluginProps;
-    ios?: AirshipIOSPluginProps;
+  android?: AirshipAndroidPluginProps;
+  ios?: AirshipIOSPluginProps;
 };
 
 const withAirship: ConfigPlugin<AirshipPluginProps> = (config, props) => {

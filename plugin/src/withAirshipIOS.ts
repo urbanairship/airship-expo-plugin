@@ -147,8 +147,8 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
         && configurations[key].buildSettings.PRODUCT_NAME == `"${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}"`
       ) {
         const buildSettingsObj = configurations[key].buildSettings;
-        buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = 14.0;
-        buildSettingsObj.SWIFT_VERSION = 5.0;
+        buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = "14.0";
+        buildSettingsObj.SWIFT_VERSION = "5.0";
       }
     }
 

@@ -21,7 +21,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.usernotifications.service</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME)</string>
+		<string>$(PRODUCT_MODULE_NAME).AirshipNotificationService</string>
 	</dict>
 </dict>
 </plist>

@@ -103,13 +103,13 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
       }
     });
 
-    // WORK AROUND for codeProject.addTarget BUG
-    // Xcode projects don't contain these if there is only one target
+    // WORK AROUND for xcodeProject.addTarget BUG (making the pod install to fail somehow)
+    // Xcode projects don't contain these if there is only one target in the app
     // An upstream fix should be made to the code referenced in this link:
     //   - https://github.com/apache/cordova-node-xcode/blob/8b98cabc5978359db88dc9ff2d4c015cba40f150/lib/pbxProject.js#L860
-    // const projObjects = xcodeProject.hash.project.objects;
-    // projObjects['PBXTargetDependency'] = projObjects['PBXTargetDependency'] || {};
-    // projObjects['PBXContainerItemProxy'] = projObjects['PBXTargetDependency'] || {};
+    const projObjects = xcodeProject.hash.project.objects;
+    projObjects['PBXTargetDependency'] = projObjects['PBXTargetDependency'] || {};
+    projObjects['PBXContainerItemProxy'] = projObjects['PBXTargetDependency'] || {};
 
     // Add the Notification Service Extension Target
     // This adds PBXTargetDependency and PBXContainerItemProxy
@@ -147,8 +147,8 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
         && configurations[key].buildSettings.PRODUCT_NAME == `"${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}"`
       ) {
         const buildSettingsObj = configurations[key].buildSettings;
-        buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = 14;
-        buildSettingsObj.SWIFT_VERSION = 5;
+        buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = 14.0;
+        buildSettingsObj.SWIFT_VERSION = 5.0;
       }
     }
 

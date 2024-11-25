@@ -3,6 +3,6 @@
 
 import AirshipServiceExtension
 
-class NotificationService: UANotificationServiceExtension {
+class AirshipNotificationService: UANotificationServiceExtension {
 
 }

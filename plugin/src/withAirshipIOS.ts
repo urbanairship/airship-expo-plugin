@@ -194,8 +194,11 @@ const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (con
 export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   config = withCapabilities(config, props);
   config = withAPNSEnvironment(config, props);
-  config = withNotificationServiceExtension(config, props);
-  config = withExtensionTargetInXcodeProject(config, props);
-  config = withAirshipServiceExtensionPod(config, props);
+  
+  if (props.notificationServiceExtension) {
+    config = withNotificationServiceExtension(config, props);
+    config = withExtensionTargetInXcodeProject(config, props);
+    config = withAirshipServiceExtensionPod(config, props);
+  }
   return config;
 };

@@ -11,6 +11,7 @@ export type AirshipAndroidPluginProps = {
 
 export type AirshipIOSPluginProps = {
   mode: 'development' | 'production';
+  notificationServiceExtension?: boolean;
 }
 
 export type AirshipPluginProps = {

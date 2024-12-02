@@ -6,12 +6,31 @@ import { withAirshipIOS } from './withAirshipIOS';
 const pkg = require('airship-expo-plugin/package.json');
 
 export type AirshipAndroidPluginProps = {
+  /**
+   * Required. The notification icons for Android.
+   */
   icon: string;
+  /**
+   * Optional. The local path to a Custom Notification Channels resource file.
+   */
+  customNotificationChannels?: string;
 };
 
 export type AirshipIOSPluginProps = {
+  /**
+   * Required. Used to configure APNs environment entitlement.
+   * The accepted values are "development" and "production".
+   */
   mode: 'development' | 'production';
-  notificationServiceExtension?: boolean;
+  /**
+   * Optional. The local path to a custom Notification Service Extension.
+   */
+  notificationService?: string;
+  /**
+   * Optional. Airship will use a default one if not provided.
+   * The local path to a Notification Service Extension Info.plist.
+   */
+  notificationServiceInfo?: string;
 }
 
 export type AirshipPluginProps = {

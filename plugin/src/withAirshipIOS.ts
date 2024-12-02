@@ -8,7 +8,7 @@ import {
 } from '@expo/config-plugins';
 
 import { readFile, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { basename, join } from 'path';
 
 import { AirshipIOSPluginProps } from './withAirship';
 import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/generateCode';
@@ -37,7 +37,21 @@ const withAPNSEnvironment: ConfigPlugin<AirshipIOSPluginProps> = (config, props)
   });
 };
 
+const withNotificationServiceExtension: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  return withDangerousMod(config, [
+    'ios',
+    async config => {
+      await writeNotificationServiceFilesAsync(props, config.modRequest.projectRoot);
+      return config;
+    },
+  ]);
+};
+
 async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, projectRoot: string) {
+  if (!props.notificationService) {
+    return;
+  }
+
   const pluginDir = require.resolve("airship-expo-plugin/package.json");
   const sourceDir = join(pluginDir, "../plugin/NotificationServiceExtension/");
 
@@ -47,35 +61,32 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
     mkdirSync(extensionPath, { recursive: true });
   }
 
-  // Copy the AirshipNotificationService.swift file into the iOS expo project.
-  readFile(join(sourceDir, NOTIFICATION_SERVICE_FILE_NAME), 'utf8', (err, data) => {
+  // Copy the NotificationService.swift file into the iOS expo project as AirshipNotificationService.swift.
+  readFile(props.notificationService, 'utf8', (err, data) => {
     if (err || !data) {
-      console.error("Airship couldn't read file " + join(sourceDir, NOTIFICATION_SERVICE_FILE_NAME));
+      console.error("Airship couldn't read file " + props.notificationService);
       console.error(err);
       return;
     }
+
+    if (!props.notificationServiceInfo) {
+      const regexp = /class [A-Za-z]+:/;
+      const newSubStr = "class AirshipNotificationService:";
+      data = data.replace(regexp, newSubStr);
+    }
+
     writeFileSync(join(extensionPath, NOTIFICATION_SERVICE_FILE_NAME), data);
   });
   
-  // Copy the AirshipNotificationServiceExtension-Info.plist file into the iOS expo project.
-  readFile(join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), 'utf8', (err, data) => {
+  // Copy the Info.plist (default to AirshipNotificationServiceExtension-Info.plist if null) file into the iOS expo project as AirshipNotificationServiceExtension-Info.plist.
+  readFile(props.notificationServiceInfo ?? join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), 'utf8', (err, data) => {
     if (err || !data) {
-      console.error("Airship couldn't read file " + join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME));
+      console.error("Airship couldn't read file " + (props.notificationServiceInfo ?? join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME)));
       console.error(err);
       return;
     }
     writeFileSync(join(extensionPath, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), data);
   });
-};
-
-const withNotificationServiceExtension: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
-  return withDangerousMod(config, [
-    'ios',
-    async config => {
-      await writeNotificationServiceFilesAsync(props, config.modRequest.projectRoot);
-      return config;
-    },
-  ]);
 };
 
 const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
@@ -194,8 +205,7 @@ const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (con
 export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   config = withCapabilities(config, props);
   config = withAPNSEnvironment(config, props);
-  
-  if (props.notificationServiceExtension) {
+  if (props.notificationService) {
     config = withNotificationServiceExtension(config, props);
     config = withExtensionTargetInXcodeProject(config, props);
     config = withAirshipServiceExtensionPod(config, props);

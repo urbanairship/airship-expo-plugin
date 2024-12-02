@@ -5,8 +5,8 @@ import {
 } from '@expo/config-plugins';
 
 import { generateImageAsync, ImageOptions } from '@expo/image-utils';
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
-import { resolve, basename } from 'path';
+import { readFile, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { resolve, basename, join } from 'path';
 
 import { AirshipAndroidPluginProps } from './withAirship';
 
@@ -17,6 +17,8 @@ const iconSizeMap: Record<string, number> = {
   xxhdpi: 72,
   xxxhdpi: 96,
 };
+
+const NOTIFICATIONS_CHANNELS_FILE_NAME = "ua_custom_notification_channels.xml";
 
 async function writeNotificationIconImageFilesAsync(props: AirshipAndroidPluginProps, projectRoot: string) {
   const fileName = basename(props.icon)
@@ -72,8 +74,42 @@ const withCompileSDKVersionFix: ConfigPlugin<AirshipAndroidPluginProps> = (confi
   });
 };
 
+const withCustomNotificationChannels: ConfigPlugin<AirshipAndroidPluginProps> = (config, props) => {
+  return withDangerousMod(config, [
+    'android',
+    async config => {
+      await writeNotificationChannelsFileAsync(props, config.modRequest.projectRoot);
+      return config;
+    },
+  ]);
+}
+
+// TODO copy the file from assets to xml res
+async function writeNotificationChannelsFileAsync(props: AirshipAndroidPluginProps, projectRoot: string) {
+  if (!props.customNotificationChannels) {
+    return;
+  }
+
+  const xmlResPath = join(projectRoot, "android/app/src/main/res/xml");
+
+  if (!existsSync(xmlResPath)) {
+    mkdirSync(xmlResPath, { recursive: true });
+  }
+
+  // Copy the custom notification channels file into the Android expo project as ua_custom_notification_channels.xml.
+  readFile(props.customNotificationChannels, 'utf8', (err, data) => {
+    if (err || !data) {
+      console.error("Airship couldn't read file " + props.customNotificationChannels);
+      console.error(err);
+      return;
+    }
+    writeFileSync(join(xmlResPath, NOTIFICATIONS_CHANNELS_FILE_NAME), data);
+  });
+};
+
 export const withAirshipAndroid: ConfigPlugin<AirshipAndroidPluginProps> = (config, props) => {  
   config = withCompileSDKVersionFix(config, props);
   config = withNotificationIcons(config, props);
+  config = withCustomNotificationChannels(config, props);
   return config;
 };

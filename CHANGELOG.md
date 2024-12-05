@@ -1,5 +1,8 @@
 # Airship Expo Plugin Changelog
 
+## Version 1.3.0 - December 03, 2024
+Minor version that adds support for Aiship Notification Service Extension and Android Custom Notification Channels.
+
 ## Version 1.2.0 - June 04, 2024
 Minor version that updates @expo/config-plugins dependency.
 

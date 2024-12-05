@@ -7,7 +7,8 @@ const pkg = require('airship-expo-plugin/package.json');
 
 export type AirshipAndroidPluginProps = {
   /**
-   * Required. The notification icons for Android.
+   * Required. Local path to an image to use as the icon for push notifications.
+   * 96x96 all-white png with transparency. The name of the icon will be the resource name.
    */
   icon: string;
   /**
@@ -18,8 +19,7 @@ export type AirshipAndroidPluginProps = {
 
 export type AirshipIOSPluginProps = {
   /**
-   * Required. Used to configure APNs environment entitlement.
-   * The accepted values are "development" and "production".
+   * Required. The APNS entitlement. Either "development" or "production".
    */
   mode: 'development' | 'production';
   /**

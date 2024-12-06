@@ -171,6 +171,8 @@ const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (con
   return withPodfile(config, async (config) => {
     const airshipServiceExtensionPodfileSnippet = `
     target '${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}' do
+      use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
+      use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
       pod 'AirshipServiceExtension'
     end
     `;

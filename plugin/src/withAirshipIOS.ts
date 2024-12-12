@@ -13,7 +13,7 @@ import { basename, join } from 'path';
 import { AirshipIOSPluginProps } from './withAirship';
 import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/generateCode';
 
-const NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "AirshipNotificationServiceExtension";
+const DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "NotificationServiceExtension";
 const NOTIFICATION_SERVICE_FILE_NAME = "AirshipNotificationService.swift";
 const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "AirshipNotificationServiceExtension-Info.plist";
 
@@ -54,8 +54,8 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
 
   const pluginDir = require.resolve("airship-expo-plugin/package.json");
   const sourceDir = join(pluginDir, "../plugin/NotificationServiceExtension/");
-
-  const extensionPath = join(projectRoot, "ios", NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME);
+  const targetName = props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+  const extensionPath = join(projectRoot, "ios", targetName);
 
   if (!existsSync(extensionPath)) {
     mkdirSync(extensionPath, { recursive: true });
@@ -91,19 +91,20 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
 };
 
 const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  const targetName = props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+
   return withXcodeProject(config, newConfig => {
     const xcodeProject = newConfig.modResults;
-
-    if (!!xcodeProject.pbxTargetByName(NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME)) {
-      console.log(NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME + " already exists in project. Skipping...");
+    if (!!xcodeProject.pbxTargetByName(targetName)) {
+      console.log(targetName + " already exists in project. Skipping...");
       return newConfig;
     }
 
     // Create new PBXGroup for the extension
     const extGroup = xcodeProject.addPbxGroup(
       [NOTIFICATION_SERVICE_FILE_NAME, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME], 
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+      targetName, 
+      targetName
     );
 
     // Add the new PBXGroup to the top level group. This makes the
@@ -126,10 +127,10 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
     // Add the Notification Service Extension Target
     // This adds PBXTargetDependency and PBXContainerItemProxy
     const notificationServiceExtensionTarget = xcodeProject.addTarget(
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
+      targetName, 
       "app_extension", 
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
-      `${config.ios?.bundleIdentifier}.${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}`
+      targetName, 
+      `${config.ios?.bundleIdentifier}.${targetName}`
     );
 
     // Add build phases to the new Target
@@ -156,7 +157,7 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
     const configurations = xcodeProject.pbxXCBuildConfigurationSection();
     for (const key in configurations) {
       if (typeof configurations[key].buildSettings !== "undefined"
-        && configurations[key].buildSettings.PRODUCT_NAME == `"${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}"`
+        && configurations[key].buildSettings.PRODUCT_NAME == `"${targetName}"`
       ) {
         const buildSettingsObj = configurations[key].buildSettings;
         buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = "14.0";
@@ -174,9 +175,11 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
 };
 
 const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  const targetName = props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+
   return withPodfile(config, async (config) => {
     const airshipServiceExtensionPodfileSnippet = `
-    target '${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}' do
+    target '${targetName}' do
       use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
       use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
       pod 'AirshipServiceExtension'

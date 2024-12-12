@@ -62,9 +62,10 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
   }
 
   // Copy the NotificationService.swift file into the iOS expo project as AirshipNotificationService.swift.
-  readFile(props.notificationService, 'utf8', (err, data) => {
+  var notificationServiceFile = props.notificationService == "DEFAULT_AIRSHIP_SERVICE_EXTENSION" ? join(sourceDir, NOTIFICATION_SERVICE_FILE_NAME) : props.notificationService;
+  readFile(notificationServiceFile, 'utf8', (err, data) => {
     if (err || !data) {
-      console.error("Airship couldn't read file " + props.notificationService);
+      console.error("Airship couldn't read file " + notificationServiceFile);
       console.error(err);
       return;
     }
@@ -160,8 +161,13 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
         const buildSettingsObj = configurations[key].buildSettings;
         buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = "14.0";
         buildSettingsObj.SWIFT_VERSION = "5.0";
+        buildSettingsObj.DEVELOPMENT_TEAM = props?.developmentTeamID;
+        buildSettingsObj.CODE_SIGN_STYLE = "Automatic";
       }
     }
+
+    // Add development teams to the target
+    xcodeProject.addTargetAttribute("DevelopmentTeam", props?.developmentTeamID, notificationServiceExtensionTarget);
 
     return newConfig;
   });

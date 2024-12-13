@@ -32,6 +32,10 @@ export type AirshipIOSPluginProps = {
    */
   notificationServiceInfo?: string;
   /**
+   * Optional. Defaults to NotificationServiceExtension if not provided.
+   */
+  notificationServiceTargetName?: string;
+  /**
    * Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
    */
   developmentTeamID?: string;

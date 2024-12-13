@@ -25,12 +25,20 @@ export type AirshipIOSPluginProps = {
   /**
    * Optional. The local path to a custom Notification Service Extension.
    */
-  notificationService?: string;
+  notificationService?: 'DEFAULT_AIRSHIP_SERVICE_EXTENSION' | string;
   /**
    * Optional. Airship will use a default one if not provided.
    * The local path to a Notification Service Extension Info.plist.
    */
   notificationServiceInfo?: string;
+  /**
+   * Optional. Defaults to NotificationServiceExtension if not provided.
+   */
+  notificationServiceTargetName?: string;
+  /**
+   * Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
+   */
+  developmentTeamID?: string;
 }
 
 export type AirshipPluginProps = {

@@ -9,13 +9,16 @@ import {
 
 import { readFile, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { basename, join } from 'path';
+import assert from 'assert';
+
+import { ExpoConfig } from '@expo/config-types';
 
 import { AirshipIOSPluginProps } from './withAirship';
 import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/generateCode';
 
-const NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "AirshipNotificationServiceExtension";
+const DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "NotificationServiceExtension";
 const NOTIFICATION_SERVICE_FILE_NAME = "AirshipNotificationService.swift";
-const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "AirshipNotificationServiceExtension-Info.plist";
+const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "NotificationServiceExtension-Info.plist";
 
 const withCapabilities: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   return withInfoPlist(config, (plist) => {
@@ -54,17 +57,18 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
 
   const pluginDir = require.resolve("airship-expo-plugin/package.json");
   const sourceDir = join(pluginDir, "../plugin/NotificationServiceExtension/");
-
-  const extensionPath = join(projectRoot, "ios", NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME);
+  const targetName = props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+  const extensionPath = join(projectRoot, "ios", targetName);
 
   if (!existsSync(extensionPath)) {
     mkdirSync(extensionPath, { recursive: true });
   }
 
   // Copy the NotificationService.swift file into the iOS expo project as AirshipNotificationService.swift.
-  readFile(props.notificationService, 'utf8', (err, data) => {
+  var notificationServiceFile = props.notificationService == "DEFAULT_AIRSHIP_SERVICE_EXTENSION" ? join(sourceDir, NOTIFICATION_SERVICE_FILE_NAME) : props.notificationService;
+  readFile(notificationServiceFile, 'utf8', (err, data) => {
     if (err || !data) {
-      console.error("Airship couldn't read file " + props.notificationService);
+      console.error("Airship couldn't read file " + notificationServiceFile);
       console.error(err);
       return;
     }
@@ -78,31 +82,34 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
     writeFileSync(join(extensionPath, NOTIFICATION_SERVICE_FILE_NAME), data);
   });
   
-  // Copy the Info.plist (default to AirshipNotificationServiceExtension-Info.plist if null) file into the iOS expo project as AirshipNotificationServiceExtension-Info.plist.
+  // Copy the Info.plist (default to NotificationServiceExtension-Info.plist if null) file into the iOS expo project.
   readFile(props.notificationServiceInfo ?? join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), 'utf8', (err, data) => {
     if (err || !data) {
       console.error("Airship couldn't read file " + (props.notificationServiceInfo ?? join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME)));
       console.error(err);
       return;
     }
-    writeFileSync(join(extensionPath, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), data);
+    const infoPlistFilename = props.notificationServiceTargetName ? props.notificationServiceTargetName + "-Info.plist" : NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME;
+    writeFileSync(join(extensionPath, infoPlistFilename), data);
   });
 };
 
 const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  const targetName = props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+
   return withXcodeProject(config, newConfig => {
     const xcodeProject = newConfig.modResults;
-
-    if (!!xcodeProject.pbxTargetByName(NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME)) {
-      console.log(NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME + " already exists in project. Skipping...");
+    if (!!xcodeProject.pbxTargetByName(targetName)) {
+      console.log(targetName + " already exists in project. Skipping...");
       return newConfig;
     }
 
+    const infoPlistFilename = props.notificationServiceTargetName ? props.notificationServiceTargetName + "-Info.plist" : NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME;
     // Create new PBXGroup for the extension
     const extGroup = xcodeProject.addPbxGroup(
-      [NOTIFICATION_SERVICE_FILE_NAME, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME], 
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+      [NOTIFICATION_SERVICE_FILE_NAME, infoPlistFilename], 
+      targetName, 
+      targetName
     );
 
     // Add the new PBXGroup to the top level group. This makes the
@@ -125,10 +132,10 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
     // Add the Notification Service Extension Target
     // This adds PBXTargetDependency and PBXContainerItemProxy
     const notificationServiceExtensionTarget = xcodeProject.addTarget(
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
+      targetName, 
       "app_extension", 
-      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
-      `${config.ios?.bundleIdentifier}.${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}`
+      targetName, 
+      `${config.ios?.bundleIdentifier}.${targetName}`
     );
 
     // Add build phases to the new Target
@@ -155,22 +162,29 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
     const configurations = xcodeProject.pbxXCBuildConfigurationSection();
     for (const key in configurations) {
       if (typeof configurations[key].buildSettings !== "undefined"
-        && configurations[key].buildSettings.PRODUCT_NAME == `"${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}"`
+        && configurations[key].buildSettings.PRODUCT_NAME == `"${targetName}"`
       ) {
         const buildSettingsObj = configurations[key].buildSettings;
         buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = "14.0";
         buildSettingsObj.SWIFT_VERSION = "5.0";
+        buildSettingsObj.DEVELOPMENT_TEAM = props?.developmentTeamID;
+        buildSettingsObj.CODE_SIGN_STYLE = "Automatic";
       }
     }
+
+    // Add development teams to the target
+    xcodeProject.addTargetAttribute("DevelopmentTeam", props?.developmentTeamID, notificationServiceExtensionTarget);
 
     return newConfig;
   });
 };
 
 const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  const targetName = props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+
   return withPodfile(config, async (config) => {
     const airshipServiceExtensionPodfileSnippet = `
-    target '${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}' do
+    target '${targetName}' do
       use_frameworks! :linkage => podfile_properties['ios.useFrameworks'].to_sym if podfile_properties['ios.useFrameworks']
       use_frameworks! :linkage => ENV['USE_FRAMEWORKS'].to_sym if ENV['USE_FRAMEWORKS']
       pod 'AirshipServiceExtension'
@@ -204,6 +218,38 @@ const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (con
   });
 };
 
+const withEasManagedCredentials: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  assert(config.ios?.bundleIdentifier, "Missing 'ios.bundleIdentifier' in app config.")
+  config.extra = getEasManagedCredentialsConfigExtra(config as ExpoConfig, props);
+  return config;
+}
+
+function getEasManagedCredentialsConfigExtra(config: ExpoConfig, props: AirshipIOSPluginProps): {[k: string]: any} {
+  return {
+    ...config.extra,
+    eas: {
+      ...config.extra?.eas,
+      build: {
+        ...config.extra?.eas?.build,
+        experimental: {
+          ...config.extra?.eas?.build?.experimental,
+          ios: {
+            ...config.extra?.eas?.build?.experimental?.ios,
+            appExtensions: [
+              ...(config.extra?.eas?.build?.experimental?.ios?.appExtensions ?? []),
+              {
+                // Sync up with the new target
+                targetName: props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME,
+                bundleIdentifier: `${config?.ios?.bundleIdentifier}.${props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}`,
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
 export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   config = withCapabilities(config, props);
   config = withAPNSEnvironment(config, props);
@@ -211,6 +257,7 @@ export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, prop
     config = withNotificationServiceExtension(config, props);
     config = withExtensionTargetInXcodeProject(config, props);
     config = withAirshipServiceExtensionPod(config, props);
+    config = withEasManagedCredentials(config, props);
   }
   return config;
 };

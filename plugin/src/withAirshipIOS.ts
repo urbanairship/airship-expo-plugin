@@ -82,7 +82,7 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
     writeFileSync(join(extensionPath, NOTIFICATION_SERVICE_FILE_NAME), data);
   });
   
-  // Copy the Info.plist (default to AirshipNotificationServiceExtension-Info.plist if null) file into the iOS expo project as AirshipNotificationServiceExtension-Info.plist.
+  // Copy the Info.plist (default to NotificationServiceExtension-Info.plist if null) file into the iOS expo project.
   readFile(props.notificationServiceInfo ?? join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), 'utf8', (err, data) => {
     if (err || !data) {
       console.error("Airship couldn't read file " + (props.notificationServiceInfo ?? join(sourceDir, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME)));

@@ -89,7 +89,8 @@ async function writeNotificationServiceFilesAsync(props: AirshipIOSPluginProps, 
       console.error(err);
       return;
     }
-    writeFileSync(join(extensionPath, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME), data);
+    const infoPlistFilename = props.notificationServiceTargetName ? props.notificationServiceTargetName + "-Info.plist" : NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME;
+    writeFileSync(join(extensionPath, infoPlistFilename), data);
   });
 };
 

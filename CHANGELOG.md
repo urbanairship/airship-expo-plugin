@@ -1,7 +1,7 @@
 # Airship Expo Plugin Changelog
 
-## Version 1.3.2-beta - December 013, 2024
-Beta version that fixes the Notification Service Extension for EAS builds.
+## Version 1.3.2 - December 13, 2024
+Patch version that fixes the Notification Service Extension for EAS builds.
 
 ## Version 1.3.1 - December 06, 2024
 Patch version that fixes the support for Aiship Notification Service Extension when using `use_frameworks`.

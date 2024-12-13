@@ -9,6 +9,9 @@ import {
 
 import { readFile, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { basename, join } from 'path';
+import assert from 'assert';
+
+import { ExpoConfig } from '@expo/config-types';
 
 import { AirshipIOSPluginProps } from './withAirship';
 import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/generateCode';
@@ -16,6 +19,8 @@ import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/ge
 const NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "AirshipNotificationServiceExtension";
 const NOTIFICATION_SERVICE_FILE_NAME = "AirshipNotificationService.swift";
 const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "AirshipNotificationServiceExtension-Info.plist";
+
+const AIRSHP_PLUGIN_EXTENDER_DIR_NAME = "AirshipPluginExtender";
 
 const withCapabilities: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   return withInfoPlist(config, (plist) => {
@@ -210,6 +215,100 @@ const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (con
   });
 };
 
+const withEasManagedCredentials: ConfigPlugin<AirshipIOSPluginProps> = (config) => {
+  assert(config.ios?.bundleIdentifier, "Missing 'ios.bundleIdentifier' in app config.")
+  config.extra = getEasManagedCredentialsConfigExtra(config as ExpoConfig);
+  return config;
+}
+
+function getEasManagedCredentialsConfigExtra(config: ExpoConfig): {[k: string]: any} {
+  return {
+    ...config.extra,
+    eas: {
+      ...config.extra?.eas,
+      build: {
+        ...config.extra?.eas?.build,
+        experimental: {
+          ...config.extra?.eas?.build?.experimental,
+          ios: {
+            ...config.extra?.eas?.build?.experimental?.ios,
+            appExtensions: [
+              ...(config.extra?.eas?.build?.experimental?.ios?.appExtensions ?? []),
+              {
+                // Sync up with the new target
+                targetName: NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME,
+                bundleIdentifier: `${config?.ios?.bundleIdentifier}.${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}`,
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+
+const withAirshipExtender: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  return withDangerousMod(config, [
+    'ios',
+    async config => {
+      await writeAirshipExtenderFileAsync(props, config.modRequest.projectRoot);
+      return config;
+    },
+  ]);
+};
+
+async function writeAirshipExtenderFileAsync(props: AirshipIOSPluginProps, projectRoot: string) {
+  if (!props.airshipExtender) {
+    return;
+  }
+
+  const fileName = basename(props.airshipExtender)
+  const extenderDestinationPath = join(projectRoot, "ios", AIRSHP_PLUGIN_EXTENDER_DIR_NAME);
+
+  if (!existsSync(extenderDestinationPath)) {
+    mkdirSync(extenderDestinationPath, { recursive: true });
+  }
+  
+  // Copy the Airship Extender file into the iOS expo project.
+  readFile(props.airshipExtender, 'utf8', (err, data) => {
+    if (err || !data) {
+      console.error("Airship couldn't read file " + (props.airshipExtender));
+      console.error(err);
+      return;
+    }
+    writeFileSync(join(extenderDestinationPath, fileName), data);
+  });
+};
+
+const withAirshipExtenderInMainTarget: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  return withXcodeProject(config, newConfig => {
+    const xcodeProject = newConfig.modResults;
+
+    if (!!xcodeProject.pbxTargetByName(NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME)) {
+      console.log(NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME + " already exists in project. Skipping...");
+      return newConfig;
+    }
+
+    // Create new PBXGroup for the extension
+    const extGroup = xcodeProject.addPbxGroup(
+      [NOTIFICATION_SERVICE_FILE_NAME, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME], 
+      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME, 
+      NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME
+    );
+
+    // Add the new PBXGroup to the top level group. This makes the
+    // files / folder appear in the file explorer in Xcode.
+    const groups = xcodeProject.hash.project.objects["PBXGroup"];
+    Object.keys(groups).forEach(function(key) {
+      if (typeof groups[key] === "object" && groups[key].name === undefined && groups[key].path === undefined) {
+        xcodeProject.addToPbxGroup(extGroup.uuid, key);
+      }
+    });
+
+    return newConfig;
+  });
+};
+
 export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   config = withCapabilities(config, props);
   config = withAPNSEnvironment(config, props);
@@ -217,6 +316,7 @@ export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, prop
     config = withNotificationServiceExtension(config, props);
     config = withExtensionTargetInXcodeProject(config, props);
     config = withAirshipServiceExtensionPod(config, props);
+    config = withEasManagedCredentials(config, props);
   }
   return config;
 };

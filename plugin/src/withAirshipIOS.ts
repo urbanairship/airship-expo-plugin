@@ -104,9 +104,10 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
       return newConfig;
     }
 
+    const infoPlistFilename = props.notificationServiceTargetName ? props.notificationServiceTargetName + "-Info.plist" : NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME;
     // Create new PBXGroup for the extension
     const extGroup = xcodeProject.addPbxGroup(
-      [NOTIFICATION_SERVICE_FILE_NAME, NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME], 
+      [NOTIFICATION_SERVICE_FILE_NAME, infoPlistFilename], 
       targetName, 
       targetName
     );

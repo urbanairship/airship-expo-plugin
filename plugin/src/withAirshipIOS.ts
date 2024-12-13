@@ -18,7 +18,7 @@ import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/ge
 
 const DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "NotificationServiceExtension";
 const NOTIFICATION_SERVICE_FILE_NAME = "AirshipNotificationService.swift";
-const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "AirshipNotificationServiceExtension-Info.plist";
+const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "NotificationServiceExtension-Info.plist";
 
 const withCapabilities: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   return withInfoPlist(config, (plist) => {
@@ -216,13 +216,13 @@ const withAirshipServiceExtensionPod: ConfigPlugin<AirshipIOSPluginProps> = (con
   });
 };
 
-const withEasManagedCredentials: ConfigPlugin<AirshipIOSPluginProps> = (config) => {
+const withEasManagedCredentials: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   assert(config.ios?.bundleIdentifier, "Missing 'ios.bundleIdentifier' in app config.")
-  config.extra = getEasManagedCredentialsConfigExtra(config as ExpoConfig);
+  config.extra = getEasManagedCredentialsConfigExtra(config as ExpoConfig, props);
   return config;
 }
 
-function getEasManagedCredentialsConfigExtra(config: ExpoConfig): {[k: string]: any} {
+function getEasManagedCredentialsConfigExtra(config: ExpoConfig, props: AirshipIOSPluginProps): {[k: string]: any} {
   return {
     ...config.extra,
     eas: {
@@ -237,8 +237,8 @@ function getEasManagedCredentialsConfigExtra(config: ExpoConfig): {[k: string]: 
               ...(config.extra?.eas?.build?.experimental?.ios?.appExtensions ?? []),
               {
                 // Sync up with the new target
-                targetName: NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME,
-                bundleIdentifier: `${config?.ios?.bundleIdentifier}.${NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}`,
+                targetName: props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME,
+                bundleIdentifier: `${config?.ios?.bundleIdentifier}.${props.notificationServiceTargetName ?? DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME}`,
               }
             ]
           }

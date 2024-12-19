@@ -32,7 +32,7 @@
   "readmeFilename": "README.md",
   "homepage": "https://github.com/urbanairship/airship-expo-plugin",
   "dependencies": {
-    "@expo/config-plugins": "^8.0.4",
+    "@expo/config-plugins": "^9.0.12",
     "@expo/image-utils": "^0.4.1"
   },
   "devDependencies": {

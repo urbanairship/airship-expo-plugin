@@ -20,6 +20,8 @@ const DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "NotificationServiceE
 const NOTIFICATION_SERVICE_FILE_NAME = "AirshipNotificationService.swift";
 const NOTIFICATION_SERVICE_INFO_PLIST_FILE_NAME = "NotificationServiceExtension-Info.plist";
 
+const AIRSHP_PLUGIN_EXTENDER_DIR_NAME = "AirshipPluginExtender";
+
 const withCapabilities: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   return withInfoPlist(config, (plist) => {
     if (!Array.isArray(plist.modResults.UIBackgroundModes)) {
@@ -250,6 +252,84 @@ function getEasManagedCredentialsConfigExtra(config: ExpoConfig, props: AirshipI
   }
 }
 
+const withAirshipExtender: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  return withDangerousMod(config, [
+    'ios',
+    async config => {
+      await writeAirshipExtenderFileAsync(props, config.modRequest.projectRoot);
+      return config;
+    },
+  ]);
+};
+
+async function writeAirshipExtenderFileAsync(props: AirshipIOSPluginProps, projectRoot: string) {
+  if (!props.airshipExtender) {
+    return;
+  }
+
+  const fileName = basename(props.airshipExtender)
+  const extenderDestinationPath = join(projectRoot, "ios", AIRSHP_PLUGIN_EXTENDER_DIR_NAME);
+
+  if (!existsSync(extenderDestinationPath)) {
+    mkdirSync(extenderDestinationPath, { recursive: true });
+  }
+  
+  // Copy the Airship Extender file into the iOS expo project.
+  readFile(props.airshipExtender, 'utf8', (err, data) => {
+    if (err || !data) {
+      console.error("Airship couldn't read file " + (props.airshipExtender));
+      console.error(err);
+      return;
+    }
+    writeFileSync(join(extenderDestinationPath, fileName), data);
+  });
+};
+
+const withAirshipExtenderInMainTarget: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  return withXcodeProject(config, newConfig => {
+    const xcodeProject = newConfig.modResults;
+
+    if (!props.airshipExtender) {
+      return newConfig;
+    }
+
+    if (!!xcodeProject.pbxGroupByName(AIRSHP_PLUGIN_EXTENDER_DIR_NAME)) {
+      console.log(AIRSHP_PLUGIN_EXTENDER_DIR_NAME + " already exists in project. Skipping...");
+      return newConfig;
+    }
+
+    const extenderFileName = basename(props.airshipExtender);
+    const mainAppTarget = xcodeProject.getFirstTarget();
+
+    // Create new PBXGroup for the Airship Extender
+    const extGroup = xcodeProject.addPbxGroup(
+      [],
+      AIRSHP_PLUGIN_EXTENDER_DIR_NAME, 
+      AIRSHP_PLUGIN_EXTENDER_DIR_NAME
+    );
+
+    // Add the new PBXGroup to the top level group. This makes the
+    // files / folder appear in the file explorer in Xcode.
+    const groups = xcodeProject.hash.project.objects["PBXGroup"];
+    Object.keys(groups).forEach(function(key) {
+      if (typeof groups[key] === "object" && groups[key].name === undefined && groups[key].path === undefined) {
+          xcodeProject.addToPbxGroup(extGroup.uuid, key);
+      }
+    });
+    
+    // Add the AirshipExtender source file to the Main Target Build Phases
+    xcodeProject.addSourceFile(
+      extenderFileName,
+      {
+        target: mainAppTarget.uuid
+      },
+      extGroup.uuid
+    );
+
+    return newConfig;
+  });
+};
+
 export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   config = withCapabilities(config, props);
   config = withAPNSEnvironment(config, props);
@@ -258,6 +338,10 @@ export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, prop
     config = withExtensionTargetInXcodeProject(config, props);
     config = withAirshipServiceExtensionPod(config, props);
     config = withEasManagedCredentials(config, props);
+  }
+  if (props.airshipExtender) {
+    config = withAirshipExtender(config, props);
+    config = withAirshipExtenderInMainTarget(config, props);
   }
   return config;
 };

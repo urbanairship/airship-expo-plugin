@@ -1,5 +1,8 @@
 # Airship Expo Plugin Changelog
 
+## Version 1.4.0 - December 20, 2024
+Minor version that adds support for Aiship Plugin Extender.
+
 ## Version 1.3.2 - December 13, 2024
 Patch version that fixes the Notification Service Extension for EAS builds.
 

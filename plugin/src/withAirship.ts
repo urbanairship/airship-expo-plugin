@@ -15,7 +15,9 @@ export type AirshipAndroidPluginProps = {
    * Optional. The local path to a Custom Notification Channels resource file.
    */
   customNotificationChannels?: string;
-
+  /**
+   * Optional. The local path to a AirshipExtender.kt file.
+   */
   airshipExtender?: string;
 };
 
@@ -41,7 +43,9 @@ export type AirshipIOSPluginProps = {
    * Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
    */
   developmentTeamID?: string;
-
+  /**
+   * Optional. The local path to a AirshipPluginExtender.swift file.
+   */
   airshipExtender?: string;
 }
 

@@ -20,12 +20,16 @@ Add the plugin to the app.json:
       {
         "android":{
           "icon": "./assets/ic_notification.png",
-          "customNotificationChannels": "./assets/notification_channels.xml"
+          "customNotificationChannels": "./assets/notification_channels.xml",
+          "airshipExtender": "./assets/AirshipExtender.kt"
         },
         "ios":{
           "mode": "development",
           "notificationService": "./assets/NotificationService.swift",
-          "notificationServiceInfo": "./assets/NotificationServiceExtension-Info.plist"
+          "notificationServiceInfo": "./assets/NotificationServiceExtension-Info.plist",
+          "notificationServiceTargetName": "NotificationServiceExtension",
+          "developmentTeamID": "MY_TEAM_ID",
+          "airshipExtender": "./assets/AirshipPluginExtender.swift"
         }
       }
     ]
@@ -35,11 +39,15 @@ Add the plugin to the app.json:
 Android Config:
 - icon: Required. Local path to an image to use as the icon for push notifications. 96x96 all-white png with transparency. The name of the icon will be the resource name.
 - customNotificationChannels: Optional. The local path to a Custom Notification Channels resource file.
+- airshipExtender: Optional. The local path to a AirshipExtender.kt file.
 
 iOS Config:
 - mode: Required. The APNS entitlement. Either `development` or `production`.
-- notificationService: Optional. The local path to a custom Notification Service Extension.
+- notificationService: Optional. The local path to a custom Notification Service Extension or `DEFAULT_AIRSHIP_SERVICE_EXTENSION` for Airship's default one.
 - notificationServiceInfo: Optional. Airship will use a default one if not provided. The local path to a Notification Service Extension Info.plist.
+- notificationServiceTargetName: Optional. Defaults to NotificationServiceExtension if not provided.
+- developmentTeamID: Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
+- airshipExtender: Optional. The local path to a AirshipPluginExtender.swift file.
 
 ## Calling takeOff
 

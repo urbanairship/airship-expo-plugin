@@ -6,7 +6,7 @@ Airship [Expo Config Plugin](https://docs.expo.dev/guides/config-plugins/). This
 
 ```sh
 expo install airship-expo-plugin
-yarn add urbanairship-react-native
+yarn add @ua/react-native-airship
 ```
 
 ### Configuring the plugin
@@ -29,6 +29,7 @@ Add the plugin to the app.json:
           "notificationServiceInfo": "./assets/NotificationServiceExtension-Info.plist",
           "notificationServiceTargetName": "NotificationServiceExtension",
           "developmentTeamID": "MY_TEAM_ID",
+          "deploymentTarget": "15.0",
           "airshipExtender": "./assets/AirshipPluginExtender.swift"
         }
       }
@@ -47,6 +48,7 @@ iOS Config:
 - notificationServiceInfo: Optional. Airship will use a default one if not provided. The local path to a Notification Service Extension Info.plist.
 - notificationServiceTargetName: Optional. Defaults to NotificationServiceExtension if not provided.
 - developmentTeamID: Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
+- deploymentTarget: Optional. The minimum Deployment Target version used to configure the Notification Service Extension target. Defaults to iOS 15.
 - airshipExtender: Optional. The local path to a AirshipPluginExtender.swift file.
 
 ## Calling takeOff

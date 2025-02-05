@@ -1,5 +1,8 @@
 # Airship Expo Plugin Changelog
 
+## Version 2.0.0 - Febrary 05, 2024
+Major version that adds support for the Airship ReactNative SDK 21. The min deployment target is now iOS 15.
+
 ## Version 1.4.0 - December 20, 2024
 Minor version that adds support for Aiship Plugin Extender.
 

@@ -167,7 +167,7 @@ const withExtensionTargetInXcodeProject: ConfigPlugin<AirshipIOSPluginProps> = (
         && configurations[key].buildSettings.PRODUCT_NAME == `"${targetName}"`
       ) {
         const buildSettingsObj = configurations[key].buildSettings;
-        buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = "14.0";
+        buildSettingsObj.IPHONEOS_DEPLOYMENT_TARGET = props.deploymentTarget ?? "15.0";
         buildSettingsObj.SWIFT_VERSION = "5.0";
         buildSettingsObj.DEVELOPMENT_TEAM = props?.developmentTeamID;
         buildSettingsObj.CODE_SIGN_STYLE = "Automatic";

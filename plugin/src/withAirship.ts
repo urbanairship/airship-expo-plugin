@@ -44,6 +44,10 @@ export type AirshipIOSPluginProps = {
    */
   developmentTeamID?: string;
   /**
+   * Optional. The minimum Deployment Target version used to configure the Notification Service Extension target.
+   */
+  deploymentTarget?: string;
+  /**
    * Optional. The local path to a AirshipPluginExtender.swift file.
    */
   airshipExtender?: string;

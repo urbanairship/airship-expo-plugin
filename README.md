@@ -48,7 +48,7 @@ iOS Config:
 - notificationServiceInfo: Optional. Airship will use a default one if not provided. The local path to a Notification Service Extension Info.plist.
 - notificationServiceTargetName: Optional. Defaults to NotificationServiceExtension if not provided.
 - developmentTeamID: Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
-- deploymentTarget: Optional. The minimum Deployment Target version used to configure the Notification Service Extension target.
+- deploymentTarget: Optional. The minimum Deployment Target version used to configure the Notification Service Extension target. Defaults to iOS 15.
 - airshipExtender: Optional. The local path to a AirshipPluginExtender.swift file.
 
 ## Calling takeOff

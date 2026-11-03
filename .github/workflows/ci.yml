@@ -7,5 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26.13.0'
       - name: Build
         run: yarn install && yarn build

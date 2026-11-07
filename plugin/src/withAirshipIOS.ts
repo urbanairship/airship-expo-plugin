@@ -14,7 +14,7 @@ import assert from 'assert';
 import { ExpoConfig } from '@expo/config-types';
 
 import { AirshipIOSPluginProps } from './withAirship';
-import { mergeContents, MergeResults } from '@expo/config-plugins/build/utils/generateCode';
+import { mergeContents, removeContents, MergeResults } from '@expo/config-plugins/build/utils/generateCode';
 
 const DEFAULT_NOTIFICATION_SERVICE_EXTENSION_TARGET_NAME = "NotificationServiceExtension";
 const NOTIFICATION_SERVICE_FILE_NAME = "AirshipNotificationService.swift";
@@ -330,6 +330,50 @@ const withAirshipExtenderInMainTarget: ConfigPlugin<AirshipIOSPluginProps> = (co
   });
 };
 
+const AIRSHIP_PREBUILT_SDK_TAG = "AirshipPrebuiltSdk";
+
+const withAirshipPrebuiltSdk: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
+  return withPodfile(config, async (config) => {
+    if (props.usePrebuiltSdk === undefined) {
+      config.modResults.contents = removeContents({
+        src: config.modResults.contents,
+        tag: AIRSHIP_PREBUILT_SDK_TAG
+      }).contents;
+      return config;
+    }
+
+    const airshipPrebuiltPodfileSnippet = `    airship_path = File.dirname(Pod::Executable.execute_command('node', ['-p',
+      'require.resolve("@ua/react-native-airship/package.json", {paths: [process.argv[1]]})', __dir__]).strip)
+    require File.join(airship_path, 'ios/airship_prebuilt')
+    airship_use_prebuilt!(installer, enabled: ${props.usePrebuiltSdk})`;
+
+    let results: MergeResults;
+    try {
+      results = mergeContents({
+        tag: AIRSHIP_PREBUILT_SDK_TAG,
+        src: config.modResults.contents,
+        newSrc: airshipPrebuiltPodfileSnippet,
+        anchor: /post_install do \|installer\|/,
+        offset: 1,
+        comment: '#'
+      });
+    } catch (error: any) {
+      if (error.code === 'ERR_NO_MATCH') {
+        throw new Error(
+          `Cannot add the Airship prebuilt SDK to the project's ios/Podfile because it has no post_install block. Please report this with a copy of your project Podfile.`
+        );
+      }
+      throw error;
+    }
+
+    if (results.didMerge || results.didClear) {
+      config.modResults.contents = results.contents;
+    }
+
+    return config;
+  });
+};
+
 export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, props) => {
   config = withCapabilities(config, props);
   config = withAPNSEnvironment(config, props);
@@ -343,5 +387,6 @@ export const withAirshipIOS: ConfigPlugin<AirshipIOSPluginProps> = (config, prop
     config = withAirshipExtender(config, props);
     config = withAirshipExtenderInMainTarget(config, props);
   }
+  config = withAirshipPrebuiltSdk(config, props);
   return config;
 };

@@ -50,6 +50,7 @@ iOS Config:
 - developmentTeamID: Optional. The Apple Development Team ID used to configure the Notification Service Extension target.
 - deploymentTarget: Optional. The minimum Deployment Target version used to configure the Notification Service Extension target. Defaults to iOS 15.
 - airshipExtender: Optional. The local path to a AirshipPluginExtender.swift file.
+- usePrebuiltSdk: Optional. `true` links the prebuilt Airship iOS SDK ([ios-library-prebuilt](https://github.com/urbanairship/ios-library-prebuilt)) instead of compiling it from source, which shortens clean builds. Set it to `false`, rather than removing it, to switch an existing `ios/` directory back to source; after `expo prebuild --clean` either works. Requires a version of `@ua/react-native-airship` that ships `ios/airship_prebuilt.rb`.
 
 ## Calling takeOff
 

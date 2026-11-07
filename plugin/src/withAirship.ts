@@ -52,6 +52,11 @@ export type AirshipIOSPluginProps = {
    * Optional. The local path to a AirshipPluginExtender.swift file.
    */
   airshipExtender?: string;
+  /**
+   * Optional. Links the prebuilt Airship iOS SDK instead of compiling it from source.
+   * Set to `false` to switch an existing prebuild back to source. Requires @ua/react-native-airship with `ios/airship_prebuilt.rb`.
+   */
+  usePrebuiltSdk?: boolean;
 }
 
 export type AirshipPluginProps = {
